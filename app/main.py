@@ -11,6 +11,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
 import os
+from time import sleep
+from random import uniform
 
 
 load_dotenv()
@@ -78,7 +80,7 @@ class Parser:
         options = Options()
         options.binary_location = "/usr/bin/chromium-browser"
         options.add_argument(
-            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0"
+            "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         )
         options.add_argument("--start-maximized")
         options.add_argument("--disable-blink-features=AutomationControlled")
@@ -118,6 +120,17 @@ class Parser:
             EC.presence_of_element_located((by, value))
         )
 
+    def _check_for_captcha(self) -> None:
+        """Перевіряє наявність капчі та очікує ручного розв’язання, якщо вона є."""
+        try:
+            captcha = self.driver.find_element(By.ID, "captcha-internal")
+            if captcha:
+                logging.warning("CAPTCHA detected. Manual intervention required.")
+                input("Solve the CAPTCHA in the browser and press Enter to continue...")
+                logging.info("CAPTCHA resolved. Continuing execution.")
+        except:
+            logging.info("No CAPTCHA detected. Continuing execution.")
+
     def random_scroll(self, times=3) -> None:
         """Виконує випадкове прокручування сторінки для імітації поведінки користувача.
 
@@ -131,6 +144,12 @@ class Parser:
             self.driver.execute_script(f"window.scrollBy(0, {scroll_height});")
             time.sleep(randint(2, 6))
 
+    def human_typing(self, element, text) -> None:
+        """Імітує введення тексту користувачем, вводячи символи по одному з випадковою затримкою."""
+        for char in text:
+            element.send_keys(char)
+            sleep(uniform(0.1, 0.3))
+
     def login(self, username: str, password: str) -> None:
         """Виконує логін на LinkedIn, використовуючи вказані логін та пароль.
 
@@ -143,15 +162,20 @@ class Parser:
 
         logging.info("Navigating to the login page.")
         self.driver.get(self.login_url)
-        self.random_scroll(2)
+        self.random_scroll(1)
+
+        self.driver.delete_all_cookies()
+        logging.info("Cookies cleared before login attempt.")
 
         logging.info("Attempting to enter username and password.")
         try:
-            self.driver.find_element(By.ID, "username").send_keys(username)
-            self.random_scroll(2)
-            self.driver.find_element(By.ID, "password").send_keys(
-                password + Keys.RETURN
-            )
+            username_input = self.driver.find_element(By.ID, "username")
+            self.human_typing(username_input, username)
+
+            password_input = self.driver.find_element(By.ID, "password")
+            self.human_typing(password_input, password)
+
+            self._check_for_captcha()
         except Exception as e:
             logging.error(f"An error occurred during login.: {e}")
         self.random_scroll(2)
@@ -160,7 +184,7 @@ class Parser:
             logging.info("Login successful.")
         else:
             logging.error("Login failed.")
-            raise Exception("Login failed.")
+            raise Exception("Login failed")
 
     def update_cookie(self) -> None:
         """Оновлює cookies після авторизації для подальшого використання у HTTP-запитах."""
