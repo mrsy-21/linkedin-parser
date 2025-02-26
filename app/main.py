@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 import os
 from time import sleep
 from random import uniform
+import undetected_chromedriver as uc
 
 
 load_dotenv()
@@ -72,33 +73,28 @@ class Parser:
         logging.info("Logger initialization was successful")
 
     def _init_driver(self) -> None:
-        """Ініціалізує браузерний драйвер Chrome
+        """Ініціалізує браузерний драйвер Chrome за допомогою undetected-chromedriver.
 
         Є можливість працювати в headless-режимі.
         """
-
-        options = Options()
-        options.binary_location = "/usr/bin/chromium"
+        options = uc.ChromeOptions()
+        options.binary_location = "/usr/bin/chromium-browser"
         options.add_argument(
-            "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
         )
         options.add_argument("--start-maximized")
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
 
-        # Only headless
-        options.add_argument("--headless=new")
-        options.add_argument("--window-size=1920,1080")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--disable-software-rasterizer")
+        # Якщо потрібен headless-режим, розкоментуй:
+        # options.add_argument("--headless=new")
+        # options.add_argument("--window-size=1920,1080")
+        # options.add_argument("--disable-gpu")
+        # options.add_argument("--disable-software-rasterizer")
 
-        service = Service("/usr/bin/chromedriver")
-        self.driver = webdriver.Chrome(service=service, options=options)
-        self.driver.execute_script(
-            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-        )
-        logging.info("Chromium driver successfully initialized")
+        self.driver = uc.Chrome(options=options, headless=False)
+        logging.info("Undetected Chromium driver successfully initialized")
 
     def _find_element(self, by, value, timeout=10) -> EC.WebElement:
         """Пошук елемента на сторінці з очікуванням
@@ -174,6 +170,11 @@ class Parser:
 
             password_input = self.driver.find_element(By.ID, "password")
             self.human_typing(password_input, password)
+
+            sign_in_button = self.driver.find_element(
+                By.XPATH, '//button[@type="submit"]'
+            )
+            sign_in_button.click()
 
             self._check_for_captcha()
         except Exception as e:
