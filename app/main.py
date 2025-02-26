@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 import os
 from time import sleep
 from random import uniform
-import undetected_chromedriver as uc
 
 
 load_dotenv()
@@ -77,8 +76,8 @@ class Parser:
 
         Є можливість працювати в headless-режимі.
         """
-        options = uc.ChromeOptions()
-        options.binary_location = "/usr/bin/chromium-browser"
+        options = webdriver.ChromeOptions()
+        options.binary_location = "/usr/bin/chromium"
         options.add_argument(
             "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
         )
@@ -87,13 +86,14 @@ class Parser:
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
 
-        # Якщо потрібен headless-режим, розкоментуй:
-        # options.add_argument("--headless=new")
-        # options.add_argument("--window-size=1920,1080")
-        # options.add_argument("--disable-gpu")
-        # options.add_argument("--disable-software-rasterizer")
+        # Якщо потрібен headless-режим:
+        options.add_argument("--headless=new")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-software-rasterizer")
 
-        self.driver = uc.Chrome(options=options, headless=False)
+        service = Service("/usr/bin/chromedriver")
+        self.driver = webdriver.Chrome(service=service, options=options)
         logging.info("Undetected Chromium driver successfully initialized")
 
     def _find_element(self, by, value, timeout=10) -> EC.WebElement:
@@ -185,7 +185,7 @@ class Parser:
             logging.info("Login successful.")
         else:
             logging.error("Login failed.")
-            raise Exception("Login failed")
+            raise Exception("Login failed.")
 
     def update_cookie(self) -> None:
         """Оновлює cookies після авторизації для подальшого використання у HTTP-запитах."""
