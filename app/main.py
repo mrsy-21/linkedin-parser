@@ -78,7 +78,7 @@ class Parser:
         """
 
         options = Options()
-        options.binary_location = "/usr/bin/chromium-browser"
+        options.binary_location = "/usr/bin/chromium"
         options.add_argument(
             "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         )
@@ -88,10 +88,10 @@ class Parser:
         options.add_argument("--disable-dev-shm-usage")
 
         # Only headless
-        # options.add_argument("--headless=new")
-        # options.add_argument("--window-size=1920,1080")
-        # options.add_argument("--disable-gpu")
-        # options.add_argument("--disable-software-rasterizer")
+        options.add_argument("--headless=new")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-software-rasterizer")
 
         service = Service("/usr/bin/chromedriver")
         self.driver = webdriver.Chrome(service=service, options=options)
